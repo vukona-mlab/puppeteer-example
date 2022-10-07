@@ -1,7 +1,18 @@
-const puppeteer = require("puppeteer");
+// const puppeteer = require("puppeteer");
 const cors=require('cors')
 const express = require('express')
 const app = express();
+
+// to avoid recapchas
+const randomUseragent = require('random-useragent');
+// const userAgent = require('user-agents');
+
+    //Enable stealth mode
+    const puppeteer = require('puppeteer-extra')
+    const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+const UserAgent = require('user-agents');
+    puppeteer.use(StealthPlugin())
+//
 const port = 5000;
 
 app.use(cors());
@@ -24,11 +35,12 @@ async function getUrls(search) {
       // const title = el.querySelector('a').getAttribute('href');
       const image= el.querySelector('div > div > div > img').getAttribute('src')
       const  price = el.querySelector(selector2).textContent
+      const formattedPrice = price.replace('R', '')
       const  name = el.querySelector(titleSelector).textContent
       // console.log(el.jsonValue())
   
        
-      return { price, name, image}
+      return { price: formattedPrice, name, image}
     })
     return data
   })
@@ -67,14 +79,20 @@ async function getSparDetails(search) {
   //const selector = "body > main > div:nth-child(14) > div > div > div > div > div:nth-child(5) > div > div.carousel-component.fed-prodref-carousel.small-chevron > div > div.owl-stage-outer > div > div > div > div.item.js-product-card-item.product-card-grid"
 }
 async function fetchShopriteProducts(search) {
+  puppeteer.use(StealthPlugin())
+  const userAgent = randomUseragent.getRandom();
+  const userAgent2 = UserAgent.random().toString()
   const browser = await puppeteer.launch({
     // headless: false,
-    args: ["--no-sandbox", "--disable-setuid--sandbox"]
+    args: ["--no-sandbox", "--disable-setuid--sandbox", "--disable-notifications"]
   })
   const url = "https://www.shoprite.co.za/search/all?q=";
   const fullUrl = url + search;
   const page = await browser.newPage()
-  await page.setDefaultNavigationTimeout(90000);
+
+
+  await page.setUserAgent(userAgent2 || userAgent || '5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36')
+  await page.setDefaultNavigationTimeout(9000000);
   await page.evaluateOnNewDocument(function() {
     navigator.geolocation.getCurrentPosition = function (cb) {
       setTimeout(() => {
@@ -93,15 +111,20 @@ async function fetchShopriteProducts(search) {
     }
   });
   await page.goto(fullUrl);
-  await page.waitForSelector('body')
+  await page.waitForSelector('div.search-landing')
   
   const products = await page.evaluate(() => {
+    console.log('in eval');
     const selectors = "main > div > div > div:nth-child(1) > div > div > div.row > div > div.product-frame.product-ga > div"
     const selectord = "body > googletagmanager:iframe > main > div.main__inner-wrapper.wrap > div.search-landing > div:nth-child(1) > div > div > div.row > div.search-landing__block__list.col-sm-12.col-md-9 > div.product-frame.product-ga > div"
     const selectora = "body > googletagmanager:iframe > main > div.main__inner-wrapper.wrap > div.search-landing > div:nth-child(1) > div > div > div.row > div.search-landing__block__list.col-sm-12.col-md-9 > div.product-frame.product-ga > div"
     const data = Array.from(document.querySelectorAll(selectors)).map((el, i) => {
       console.log(i);
-      return i
+      const imageUrl = el.querySelector('figure > div > a > img').getAttribute('src');
+      const name = el.querySelector('figure > figcaption > div.item-product__details > h3 > a').textContent;
+      const price = el.querySelector('figure > figcaption > div.item-product__details > div > div > div > span').textContent
+      const formattedPrice = price.replace('R','').replace('\n','').trim()
+      return { imageUrl, name, price: formattedPrice }
     })
     console.log('length: ', data.length);
     return data
@@ -145,9 +168,70 @@ async function fetchMakroProducts(search) {
     const data = Array.from(document.querySelectorAll(selector)).map((el, index) => {
       console.log(index);
       const imageUrl = el.querySelector('a > img').getAttribute('src');
-      const name = el.querySelector('div > a > span').textContent;
+      const name = el.querySelector('div > a > span').textContent.trim();
       const price = el.querySelector('div > p').textContent
-      return { imageUrl, name, price }
+      const priceAsArray = price.replace('R','').split('');
+      priceAsArray.splice(priceAsArray.length - 2, 0, '.')
+      const formattedPrice = priceAsArray.join('').replace(',','').trim()
+      return { imageUrl, name, price: formattedPrice }
+    })
+    return data
+  })
+  console.log('dragg');
+  await browser.close()
+  return products
+
+  //const selector = "body > main > div:nth-child(14) > div > div > div > div > div:nth-child(5) > div > div.carousel-component.fed-prodref-carousel.small-chevron > div > div.owl-stage-outer > div > div > div > div.item.js-product-card-item.product-card-grid"
+}
+async function fetchPNPProducts(search) {
+  const browser = await puppeteer.launch({
+    // headless: false,
+    args: [ "--no-sandbox", "--disable-setuid-sandbox", "--disable-notifications"]
+  })
+  const url = "https://www.pnp.co.za/pnpstorefront/pnp/en/search/?text=";
+  const fullUrl = url + search
+  console.log(fullUrl);
+  const page = await browser.newPage();
+  await page.setDefaultNavigationTimeout(90000);
+  await page.evaluateOnNewDocument(function() {
+    navigator.geolocation.getCurrentPosition = function (cb) {
+      setTimeout(() => {
+        cb({
+          'coords': {
+            accuracy: 21,
+            altitude: null,
+            altitudeAccuracy: null,
+            heading: null,
+            latitude: 23.129163,
+            longitude: 113.264435,
+            speed: null
+          }
+        })
+      }, 1000)
+    }
+  });
+  await page.goto(fullUrl);
+  await page.waitForSelector('.main-container-content')
+  console.log('got main');
+  const products = await page.evaluate(() => {
+    console.log('in eval');
+    const selector = "body > main > div:nth-child(14) > div.container.no-space.main-container-content > div > div.col-xs-12.col-md-9 > div:nth-child(3) > div.col-xs-12.col-md-8.no-space > div:nth-child(2) > div > div.col-xs-12.product-list-wrapper > ul > div"
+    const data = Array.from(document.querySelectorAll(selector)).map((el, index) => {
+      console.log(index);
+      const imageUrl = el.querySelector('div > div> a > div.thumb >  img').getAttribute('src');
+      const name = el.querySelector('div > div > a > div.item-name').textContent;
+      const priceString = el.querySelector('div > div > a > div.product-price > div.item-price > div').textContent
+      const price = priceString.replace('\n\t\t\tR', '')
+      const priceAsArray = price.split('');
+      priceAsArray.splice(priceAsArray.length - 2, 0, '.')
+      const formattedPrice = priceAsArray.join('').trim()
+      // console.log({ priceString, price, priceAsArray, priceNum, formattedPrice });
+      console.log('price: ', price);
+      console.log('array: ', priceAsArray);
+      // console.log('num: ', priceNum);
+      // console.log('formatted: ', formattedPrice);
+      return { imageUrl, name, price: formattedPrice }
+      // return index
     })
     return data
   })
@@ -185,6 +269,11 @@ const getMakroProducts = async(req, res) => {
   const data = await fetchMakroProducts(qry)
   res.send(data) 
 }
+const getPNPProducts = async(req, res) => {
+  const qry = req.query.search;
+  const data = await fetchPNPProducts(qry);
+  res.send(data)
+}
 app.get('/get-game-products', (req, res) => {
   getGameProducts(req, res);
 })
@@ -197,6 +286,9 @@ app.get('/get-shoprite-products', (req, res) => {
 })
 app.get('/get-makro-products', (req, res) => {
   getMakroProducts(req, res)
+})
+app.get('/get-pnp-products', (req, res) => {
+  getPNPProducts(req, res)
 })
 app.listen(process.env.PORT || port, () => {
   console.log('listening on port : ', port);
