@@ -52,6 +52,6 @@ const getGameProducts = async(req, res) => {
 app.get('/get-game-products', (req, res) => {
   getGameProducts(req, res);
 })
-app.listen(port, () => {
+app.listen(process.env.PORT || port, () => {
   console.log('listening on port : ', port);
 })
