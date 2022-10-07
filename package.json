@@ -1,0 +1,23 @@
+{
+  "name": "web-scraper",
+  "version": "1.0.0",
+  "description": "Web scraper project that exposes itself as an API",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm start",
+    "build": "npm build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Vukona Mnisi",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.27.2",
+    "cheerio": "^1.0.0-rc.12",
+    "cors": "^2.8.5",
+    "express": "^4.18.1",
+    "pretty": "^2.0.0",
+    "puppeteer": "^18.0.5",
+    "puppeteer-extra": "^3.3.4",
+    "puppeteer-extra-plugin-stealth": "^2.11.1"
+  }
+}
