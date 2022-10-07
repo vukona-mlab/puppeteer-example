@@ -4,7 +4,7 @@
   "description": "Web scraper project that exposes itself as an API",
   "main": "index.js",
   "scripts": {
-    "start": "npm start",
+    "start": "node game.js",
     "build": "npm install",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
