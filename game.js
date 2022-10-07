@@ -7,7 +7,7 @@ const port = 5000;
 app.use(cors());
 async function getUrls(search) {
   const browser = await puppeteer.launch({
-    headless: false,
+    // headless: false,
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
   const url =   "https://www.game.co.za/l/search/?t=";
@@ -38,7 +38,7 @@ async function getUrls(search) {
 }
 async function getSparDetails(search) {
   const browser = await puppeteer.launch({
-    headless: false,
+    // headless: false,
     args: ["--no-sandbox", "--disable-setuid-sandbox"]
   })
   const url = "https://www.pnp.co.za/pnpstorefront/pnp/en/search/?text=";
@@ -68,7 +68,7 @@ async function getSparDetails(search) {
 }
 async function fetchShopriteProducts(search) {
   const browser = await puppeteer.launch({
-    headless: false,
+    // headless: false,
     args: ["--no-sandbox", "--disable-setuid--sandbox"]
   })
   const url = "https://www.shoprite.co.za/search/all?q=";
@@ -111,7 +111,7 @@ async function fetchShopriteProducts(search) {
 }
 async function fetchMakroProducts(search) {
   const browser = await puppeteer.launch({
-    headless: false,
+    // headless: false,
     args: [ "--no-sandbox", "--disable-setuid-sandbox", "--disable-notifications"]
   })
   const url = "https://www.makro.co.za/search/?text=";
