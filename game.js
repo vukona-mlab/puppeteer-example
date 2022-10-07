@@ -120,11 +120,11 @@ async function fetchShopriteProducts(search) {
     const selectora = "body > googletagmanager:iframe > main > div.main__inner-wrapper.wrap > div.search-landing > div:nth-child(1) > div > div > div.row > div.search-landing__block__list.col-sm-12.col-md-9 > div.product-frame.product-ga > div"
     const data = Array.from(document.querySelectorAll(selectors)).map((el, i) => {
       console.log(i);
-      const imageUrl = el.querySelector('figure > div > a > img').getAttribute('src');
+      const image = el.querySelector('figure > div > a > img').getAttribute('src');
       const name = el.querySelector('figure > figcaption > div.item-product__details > h3 > a').textContent;
       const price = el.querySelector('figure > figcaption > div.item-product__details > div > div > div > span').textContent
       const formattedPrice = price.replace('R','').replace('\n','').trim()
-      return { imageUrl, name, price: formattedPrice }
+      return { image, name, price: formattedPrice }
     })
     console.log('length: ', data.length);
     return data
@@ -167,13 +167,13 @@ async function fetchMakroProducts(search) {
     const selector = "#mak-body-content > div.mak-content.mak-plp-grid > div > div.row > div.col-xs-12.no-space > div.col-xs-12.col-xs-push-0.col-md-8.col-md-push-1.productListContainer > div > div > div.mak-product-tiles-container.listview.GRID > div"
     const data = Array.from(document.querySelectorAll(selector)).map((el, index) => {
       console.log(index);
-      const imageUrl = el.querySelector('a > img').getAttribute('src');
+      const image = el.querySelector('a > img').getAttribute('src');
       const name = el.querySelector('div > a > span').textContent.trim();
       const price = el.querySelector('div > p').textContent
       const priceAsArray = price.replace('R','').split('');
       priceAsArray.splice(priceAsArray.length - 2, 0, '.')
       const formattedPrice = priceAsArray.join('').replace(',','').trim()
-      return { imageUrl, name, price: formattedPrice }
+      return { image, name, price: formattedPrice }
     })
     return data
   })
@@ -218,7 +218,7 @@ async function fetchPNPProducts(search) {
     const selector = "body > main > div:nth-child(14) > div.container.no-space.main-container-content > div > div.col-xs-12.col-md-9 > div:nth-child(3) > div.col-xs-12.col-md-8.no-space > div:nth-child(2) > div > div.col-xs-12.product-list-wrapper > ul > div"
     const data = Array.from(document.querySelectorAll(selector)).map((el, index) => {
       console.log(index);
-      const imageUrl = el.querySelector('div > div> a > div.thumb >  img').getAttribute('src');
+      const image = el.querySelector('div > div> a > div.thumb >  img').getAttribute('src');
       const name = el.querySelector('div > div > a > div.item-name').textContent;
       const priceString = el.querySelector('div > div > a > div.product-price > div.item-price > div').textContent
       const price = priceString.replace('\n\t\t\tR', '')
@@ -230,7 +230,7 @@ async function fetchPNPProducts(search) {
       console.log('array: ', priceAsArray);
       // console.log('num: ', priceNum);
       // console.log('formatted: ', formattedPrice);
-      return { imageUrl, name, price: formattedPrice }
+      return { image, name, price: formattedPrice }
       // return index
     })
     return data
