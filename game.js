@@ -112,7 +112,7 @@ async function fetchShopriteProducts(search) {
 async function fetchMakroProducts(search) {
   const browser = await puppeteer.launch({
     headless: false,
-    args: [ "--disable-setuid-sandbox", "--disable-notifications"]
+    args: [ "--no-sandbox", "--disable-setuid-sandbox", "--disable-notifications"]
   })
   const url = "https://www.makro.co.za/search/?text=";
   const fullUrl = url + search
