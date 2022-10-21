@@ -1,26 +1,39 @@
-// const puppeteer = require("puppeteer");
+//const puppeteer = require("puppeteer");
 const cors=require('cors')
 const express = require('express')
 const app = express();
 
 // to avoid recapchas
 const randomUseragent = require('random-useragent');
-// const userAgent = require('user-agents');
+const userAgent = require('user-agents');
 
     //Enable stealth mode
-    const puppeteer = require('puppeteer-extra')
-    const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+   const puppeteer = require('puppeteer-extra')
+  const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const UserAgent = require('user-agents');
-    puppeteer.use(StealthPlugin())
+  puppeteer.use(StealthPlugin())
 //
-const port = 5000;
+const port = 5002;
 
 app.use(cors());
-async function getUrls(search) {
-  const browser = await puppeteer.launch({
-    // headless: false,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+app.use( (req, res, next) => {
+	res.setHeader('Content-Type', 'application/json');
+    next();
+})
+async function getUrls(search, res) {
+ let browser
+  try {   
+ browser = await puppeteer.launch({
+    headless: true,
+    // executablePath: "/usr/bin/chromium-browser",
+    args: ["--no-sandbox", "--disable-setuid-sandbox","--disable-notifications", '--use-gl=egl'],
+    ignoreDefaultArgs: ['--disable-extensions'],
   });
+	// res.send("just launched puppeteer");
+  } catch(err) {
+    console.log('puppeteer err: ', err)
+    res.send(JSON.stringify(err))
+  }
   const url =   "https://www.game.co.za/l/search/?t=";
   const page = await browser.newPage();
   await page.setDefaultNavigationTimeout(90000);
@@ -49,10 +62,12 @@ async function getUrls(search) {
   return titles;
 }
 async function getSparDetails(search) {
-  const browser = await puppeteer.launch({
-    // headless: false,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"]
-  })
+ browser = await puppeteer.launch({
+    headless: true,
+    // executablePath: "/usr/bin/chromium-browser",
+    args: ["--no-sandbox", "--disable-setuid-sandbox","--disable-notifications", '--use-gl=egl'],
+    ignoreDefaultArgs: ['--disable-extensions'],
+  });
   const url = "https://www.pnp.co.za/pnpstorefront/pnp/en/search/?text=";
   const fullUrl = url + search
   console.log(fullUrl);
@@ -82,10 +97,12 @@ async function fetchShopriteProducts(search) {
   puppeteer.use(StealthPlugin())
   const userAgent = randomUseragent.getRandom();
   const userAgent2 = UserAgent.random().toString()
-  const browser = await puppeteer.launch({
-    // headless: false,
-    args: ["--no-sandbox", "--disable-setuid--sandbox", "--disable-notifications"]
-  })
+ browser = await puppeteer.launch({
+    headless: true,
+    // executablePath: "/usr/bin/chromium-browser",
+    args: ["--no-sandbox", "--disable-setuid-sandbox","--disable-notifications", '--use-gl=egl'],
+    ignoreDefaultArgs: ['--disable-extensions'],
+  });
   const url = "https://www.shoprite.co.za/search/all?q=";
   const fullUrl = url + search;
   const page = await browser.newPage()
@@ -133,10 +150,12 @@ async function fetchShopriteProducts(search) {
   return products;
 }
 async function fetchMakroProducts(search) {
-  const browser = await puppeteer.launch({
-    // headless: false,
-    args: [ "--no-sandbox", "--disable-setuid-sandbox", "--disable-notifications"]
-  })
+ browser = await puppeteer.launch({
+    headless: true,
+    // executablePath: "/usr/bin/chromium-browser",
+    args: ["--no-sandbox", "--disable-setuid-sandbox","--disable-notifications", '--use-gl=egl'],
+    ignoreDefaultArgs: ['--disable-extensions'],
+  });
   const url = "https://www.makro.co.za/search/?text=";
   const fullUrl = url + search
   console.log(fullUrl);
@@ -185,8 +204,9 @@ async function fetchMakroProducts(search) {
 }
 async function fetchPNPProducts(search) {
   const browser = await puppeteer.launch({
-    // headless: false,
-    args: [ "--no-sandbox", "--disable-setuid-sandbox", "--disable-notifications"]
+    // headless: true,
+    args: [ "--no-sandbox", "--disable-setuid-sandbox", "--disable-notifications", '--use-gl=egl'],
+    ignoreDefaultArgs: ['--disable-extensions']
   })
   const url = "https://www.pnp.co.za/pnpstorefront/pnp/en/search/?text=";
   const fullUrl = url + search
@@ -213,9 +233,40 @@ async function fetchPNPProducts(search) {
   await page.goto(fullUrl);
   await page.waitForSelector('.main-container-content')
   console.log('got main');
+
   const products = await page.evaluate(() => {
     console.log('in eval');
+    const selector = "body > main > div:nth-child(15) > div.container.no-space.main-container-content > div > div.col-xs-12.col-md-9 > div:nth-child(3) > div.col-xs-12.col-md-8.no-space > div:nth-child(2) > div > div.col-xs-12.product-list-wrapper > ul > div"
+    const selectod = "body > main > div:nth-child(15) > div.container.no-space.main-container-content > div > div.col-xs-12.col-md-9 > div:nth-child(3) > div.col-xs-12.col-md-8.no-space > div:nth-child(2) > div > div.col-xs-12.product-list-wrapper > ul"
+    const data = Array.from(document.querySelectorAll(selector)).map((el, index) => {
+      console.log(index);
+      const image = el.querySelector('div > div> a > div.thumb >  img').getAttribute('src');
+      const name = el.querySelector('div > div > a > div.item-name').textContent;
+      const priceString = el.querySelector('div > div > a > div.product-price > div.item-price > div').textContent
+      const price = priceString.replace('\n\t\t\tR', '')
+      const priceAsArray = price.split('');
+      priceAsArray.splice(priceAsArray.length - 2, 0, '.')
+      const formattedPrice = priceAsArray.join('').trim()
+      // console.log({ priceString, price, priceAsArray, priceNum, formattedPrice });
+      console.log('price: ', price);
+      console.log('array: ', priceAsArray);
+      // console.log('num: ', priceNum);
+      // console.log('formatted: ', formattedPrice);
+      return { image, name, price: formattedPrice }
+      // return index
+    })
+    return data
+  })
+
+  if(products.length > 0) { 
+    await browser.close();
+    return products
+  }
+
+  const products2 = await page.evaluate(() => {
+    console.log('in eval');
     const selector = "body > main > div:nth-child(14) > div.container.no-space.main-container-content > div > div.col-xs-12.col-md-9 > div:nth-child(3) > div.col-xs-12.col-md-8.no-space > div:nth-child(2) > div > div.col-xs-12.product-list-wrapper > ul > div"
+    const selectod = "body > main > div:nth-child(15) > div.container.no-space.main-container-content > div > div.col-xs-12.col-md-9 > div:nth-child(3) > div.col-xs-12.col-md-8.no-space > div:nth-child(2) > div > div.col-xs-12.product-list-wrapper > ul"
     const data = Array.from(document.querySelectorAll(selector)).map((el, index) => {
       console.log(index);
       const image = el.querySelector('div > div> a > div.thumb >  img').getAttribute('src');
@@ -237,42 +288,43 @@ async function fetchPNPProducts(search) {
   })
   console.log('dragg');
   await browser.close()
-  return products
+  return products2
 
   //const selector = "body > main > div:nth-child(14) > div > div > div > div > div:nth-child(5) > div > div.carousel-component.fed-prodref-carousel.small-chevron > div > div.owl-stage-outer > div > div > div > div.item.js-product-card-item.product-card-grid"
 }
 
 // getUrls().then(console.log);
-app.get('/', () => {
-  
+app.get('/', (req, res) => {
+  console.log("We are logging things out");
+  res.send("Hey there from port 5001")  
 })
 const getGameProducts = async(req, res) => {
   console.log('in file')
   console.log(req.query.search);
-  const data = await getUrls(req.query.search)
+  const data = await getUrls(req.query.search, res)
   console.log(data);
-  res.send(data)
+  res.json({products: data })
   
 }
 const getSparProducts = async(req, res) => {
   const qry = req.query.search;
   const data = await getSparDetails(qry);
-  res.send(data)
+  res.json({ products: data })
 }
 const getShopriteProducts = async(req, res) => {
   const qry = req.query.search;
   const data = await fetchShopriteProducts(qry);
-  res.send(data)
+  res.json({ products: data })
 }
 const getMakroProducts = async(req, res) => {
   const qry = req.query.search
   const data = await fetchMakroProducts(qry)
-  res.send(data) 
+  res.json({ products: data })
 }
 const getPNPProducts = async(req, res) => {
   const qry = req.query.search;
   const data = await fetchPNPProducts(qry);
-  res.send(data)
+  res.json({ products: data })
 }
 app.get('/get-game-products', (req, res) => {
   getGameProducts(req, res);
